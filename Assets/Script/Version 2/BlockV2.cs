@@ -10,7 +10,7 @@ public class BlockV2 : MonoBehaviour, IDragHandler, IEndDragHandler
     [HideInInspector]
     public BlockState state = BlockState.normal;
 
-
+    private bool isMovable = true;
     private float canvasScaleFactor;
     private BlockTileV2 blockTilePrefab;
     private Vector2 basePosition;
@@ -63,7 +63,10 @@ public class BlockV2 : MonoBehaviour, IDragHandler, IEndDragHandler
         center.y = (max.y + min.y) / 2.0f;
         size = max - min + new Vector2Int(1, 1);
     }
-
+    public void SetMoveable(bool canBeMoved)
+    {
+        isMovable = canBeMoved;
+    }
     public Vector2Int GetCoordsRelativeToStartBlock(int index)
     {
         int x = structure[index].x - startBlockPos.x;
@@ -108,18 +111,24 @@ public class BlockV2 : MonoBehaviour, IDragHandler, IEndDragHandler
 
     void IDragHandler.OnDrag(PointerEventData eventData)
     {
-        state = BlockState.isDragged;
-        transform.localPosition += new Vector3(eventData.delta.x/canvasScaleFactor, eventData.delta.y/canvasScaleFactor, 0);
+        if (isMovable)
+        {
+            state = BlockState.isDragged;
+            transform.localPosition += new Vector3(eventData.delta.x/canvasScaleFactor, eventData.delta.y/canvasScaleFactor, 0);
+        }
     }
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        state = BlockState.isPlaced;
+        if (isMovable)
+            state = BlockState.isPlaced;
     }
 
     public void ResetBlock()
     {
         transform.localPosition = basePosition;
         ScaleBlock(localScale);
+        isMovable = true;
     }
+
 }

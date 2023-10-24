@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class BoardV2 : MonoBehaviour
@@ -67,6 +68,7 @@ public class BoardV2 : MonoBehaviour
             }
         }
     }
+    // Create new blocks
     private void CreateBlocks()
     {
         for (int i = 0; i < BLOCKS_AMOUNT; i++)
@@ -82,9 +84,13 @@ public class BoardV2 : MonoBehaviour
         {
             while (true)
             {
-                blocks[i] = SpawnBlock(i, Random.Range(0, blockTileV2s.Length),Random.Range(0,blockPrefabs.Length));
-                if (CanPlaceBlock(blocks[i])) break;
-                else { Destroy(blocks[i].gameObject); }
+                int index = Random.Range(0, blockPrefabs.Length);
+                
+                if (CanPlaceBlock(blockPrefabs[index]).Count > 0) 
+                {
+                    blocks[i] = SpawnBlock(i, Random.Range(0, blockTileV2s.Length), index);
+                    break; 
+                }
             }
 
         }
@@ -102,8 +108,8 @@ public class BoardV2 : MonoBehaviour
         return coords.x >= 0 && coords.x < BOARD_SIZE &&
                coords.y >= 0 && coords.y < BOARD_SIZE;
     }
-
-    private Vector2Int PositionToBoardTiles(Vector2 pos, BlockV2 block)
+    // Transfer world position to board coordinates
+    private Vector2Int PositionToBoardCoords(Vector2 pos, BlockV2 block)
     {
         Vector2 boardStart = boardTiles[0, 0].transform.position;
         Vector2 boardEnd = boardTiles[BOARD_SIZE - 1, BOARD_SIZE - 1].transform.position;
@@ -117,7 +123,7 @@ public class BoardV2 : MonoBehaviour
         coords.y = Mathf.RoundToInt(relPos.y);
         return coords;
     }
-    private void HighlightBlocks()
+    private void HighlightBoardTiles()
     {
         foreach (Vector2Int coords in highlightedBlocksPosList)
         {
@@ -125,7 +131,7 @@ public class BoardV2 : MonoBehaviour
         }
     }
 
-    private void RemoveHighlightedBlocks()
+    private void RemoveHighlightedBoardTiles()
     {
         foreach (Vector2Int coords in highlightedBlocksPosList)
         {
@@ -137,6 +143,7 @@ public class BoardV2 : MonoBehaviour
     {
         return boardBlocks[coords.x, coords.y] == 0;
     }
+    // Return if a block can be placed at a given position
     private bool CanPlaceBlock(BlockV2 block, Vector2Int pos)
     {
 
@@ -218,9 +225,10 @@ public class BoardV2 : MonoBehaviour
         }
 
     }
-
-    private bool CanPlaceBlock(BlockV2 block)
+    // Return a list of coordinates if a block can be place anywhere on the board
+    private List<Vector2Int> CanPlaceBlock(BlockV2 block)
     {
+        List<Vector2Int> positionList = new List<Vector2Int>();
         for (int i = 0; i < BOARD_SIZE - block.GetSize().x + 1; i++)
         {
             for (int j = 0; j < BOARD_SIZE - block.GetSize().y + 1; j++)
@@ -235,11 +243,12 @@ public class BoardV2 : MonoBehaviour
                         break;
                     }
                 }
-                if (canPlace) return true;
+                if (canPlace) positionList.Add(new Vector2Int(i,j));
+                if(positionList.Count >= 2) return positionList;
 
             }
         }
-        return false;
+        return positionList;
     }
     private void PlaceBlock(BlockV2 block)
     {
@@ -262,7 +271,7 @@ public class BoardV2 : MonoBehaviour
             else
             {
                 ret = true;
-                if (CanPlaceBlock(block))
+                if (CanPlaceBlock(block).Count!=0)
                 {
                     return false;
                 }
@@ -290,62 +299,79 @@ public class BoardV2 : MonoBehaviour
     {
         if (GameController.instance.isGameOver == true) return;
         if (IsGameOver()) GameController.instance.SetGameOver();
-        int blocksNum = BLOCKS_AMOUNT;
-        for (int i = 0; i < BLOCKS_AMOUNT; i++)
-            if (blocks[i] == null)
-            {
-                blocksNum--;
-                continue;
-            }
-            else
-            {
-                Vector2 pos = blocks[i].transform.position;
-                Vector2Int blockPos = PositionToBoardTiles(pos, blocks[i]);
-
-              
-                if (blocks[i].state == BlockState.isDragged)
+        else
+        {
+            // Check through conditions of all blocks
+            int blocksNum = BLOCKS_AMOUNT;
+            for (int i = 0; i < BLOCKS_AMOUNT; i++)
+                if (blocks[i] == null)
                 {
-                    blocks[i].ScaleBlock(boardScale);
-
-                    RemoveHighlightedBlocks();
-
-                    if (CanPlaceBlock(blocks[i], blockPos))
-                    {
-                        HighlightBlocks();
-                    }
-
+                    blocksNum--;
+                    continue;
                 }
-                else if (blocks[i].state == BlockState.isPlaced)
+                else
                 {
-                    if (highlightedBlocksPosList.Count > 0)
+                    List<Vector2Int> posPlaces = CanPlaceBlock(blocks[i]);
+                    int numOfPlaces = posPlaces.Count;
+
+                    // Cannot be placed anywhere
+                    if (numOfPlaces == 0)
                     {
-                        PlaceBlock(blocks[i]);
-
-                        int score = CheckLines(blocks[i],blockPos);
-                        if (score > 0)
-                        {
-                            GameController.instance.UpdateScore(score, blocks[i]);
-                        }
-
-                        highlightedBlocksPosList.Clear();
-                        Destroy(blocks[i].gameObject);
-                        blocks[i] = null;
-
-
+                        blocks[i].SetMoveable(false);
                     }
                     else
                     {
-                        blocks[i].state = BlockState.normal;
-                        blocks[i].ResetBlock();
-                        RemoveHighlightedBlocks();
+                        blocks[i].SetMoveable(true);
+                        Vector2 pos = blocks[i].transform.position;
+                        Vector2Int blockPos = PositionToBoardCoords(pos, blocks[i]);
+
+                        if (blocks[i].state == BlockState.isDragged)
+                        {
+                            blocks[i].ScaleBlock(boardScale);
+
+                            RemoveHighlightedBoardTiles();
+
+                            // there only one position that this block can be placed
+                            if (numOfPlaces == 1)
+                            {
+                                CanPlaceBlock(blocks[i], posPlaces.ElementAt(0));
+                                HighlightBoardTiles();
+                            }
+                            else if (CanPlaceBlock(blocks[i], blockPos))
+                            {
+                                HighlightBoardTiles();
+                            }
+
+                        }
+                        else if (blocks[i].state == BlockState.isPlaced)
+                        {
+                            if ((numOfPlaces == 1 && blockPos == posPlaces.ElementAt(0))
+                                || (numOfPlaces >= 2 && highlightedBlocksPosList.Count > 0))
+                            {
+                                PlaceBlock(blocks[i]);
+
+                                int score = CheckLines(blocks[i], blockPos);
+                                GameController.instance.UpdateScore(score, blocks[i]);
+
+                                highlightedBlocksPosList.Clear();
+                                Destroy(blocks[i].gameObject);
+                                blocks[i] = null;
+                            }
+                            else
+                            {
+                                blocks[i].state = BlockState.normal;
+                                blocks[i].ResetBlock();
+                                RemoveHighlightedBoardTiles();
+                            }
+                        }
                     }
                 }
+            // Create new blocks if theres no more blocks
+            if (blocksNum == 0)
+            {
+                CreateBlocks();
+                return;
             }
-
-        if (blocksNum == 0)
-        {
-            CreateBlocks();
-            return;
         }
     }
 }

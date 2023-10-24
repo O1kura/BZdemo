@@ -59,11 +59,11 @@ public class GameController : MonoBehaviour
         }
     }
 
-    public void PauseButton()
+    /*public void PauseButton()
     {
         if (paused) UnpauseGame();
         else PauseGame();
-    }
+    }*/
 
     public void PauseGame()
     {
@@ -96,6 +96,7 @@ public class GameController : MonoBehaviour
         score = 0;
         scoreText.SetText("0");
         resumeBtn.interactable = true;
+        scoreTextSpawner.GetComponentInChildren<ScoreText>().DestroyText();
     }
     private void LoadHighscore()
     {
