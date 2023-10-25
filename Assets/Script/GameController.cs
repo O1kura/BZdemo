@@ -96,7 +96,8 @@ public class GameController : MonoBehaviour
         score = 0;
         scoreText.SetText("0");
         resumeBtn.interactable = true;
-        scoreTextSpawner.GetComponentInChildren<ScoreText>().DestroyText();
+        ScoreText st = scoreTextSpawner.GetComponentInChildren<ScoreText>();
+        if (st != null) st.DestroyText();
     }
     private void LoadHighscore()
     {
