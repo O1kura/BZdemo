@@ -10,11 +10,12 @@ public class BoardV2 : MonoBehaviour
     public GameObject boardTilePrefab;
     public GameObject spawner;
 
-
+    [HideInInspector]
+    public bool isGameOver;
     [HideInInspector]
     public SpriteRenderer[,] boardTiles = new SpriteRenderer[BOARD_SIZE, BOARD_SIZE];
     [HideInInspector]
-    public int[,] boardBlocks = new int[BOARD_SIZE, BOARD_SIZE];
+    public bool[,] boardBlocks = new bool[BOARD_SIZE, BOARD_SIZE];
     public BlockV2[] blocks = new BlockV2[BLOCKS_AMOUNT];
 
     private BlockV2[] blockPrefabs;
@@ -27,6 +28,7 @@ public class BoardV2 : MonoBehaviour
 
     public void ResetBoard()
     {
+        isGameOver = false;
         ResetBoardTiles();
         ResetBoardBlocks();
         CreateBlocks();
@@ -45,7 +47,7 @@ public class BoardV2 : MonoBehaviour
         {
             for (int k = 0; k < BOARD_SIZE; k++)
             {
-                boardBlocks[i, k] = 0;
+                boardBlocks[i, k] = false;
             }
         }
     }
@@ -139,7 +141,7 @@ public class BoardV2 : MonoBehaviour
     }
     private bool CanPlaceBlockTile(Vector2Int coords)
     {
-        return boardBlocks[coords.x, coords.y] == 0;
+        return !boardBlocks[coords.x, coords.y];
     }
     // Return if a block can be placed at a given position
     private bool CanPlaceBlock(BlockV2 block, Vector2Int pos)
@@ -170,12 +172,16 @@ public class BoardV2 : MonoBehaviour
         // Check vertical lines
         for (int i = coords.x; i < coords.x + blockSize.x; i++)
         {
-            int sum = 0;
+            bool ret = true;
             for (int j = 0; j < BOARD_SIZE; j++)
             {
-                sum += boardBlocks[i, j];
+                if (!boardBlocks[i, j]) 
+                { 
+                    ret = false;
+                    break;
+                }
             }
-            if (sum == BOARD_SIZE)
+            if (ret)
             {
                 list_col.Add(i);
                 num++;
@@ -185,12 +191,16 @@ public class BoardV2 : MonoBehaviour
         // Check horizontal lines
         for (int i = coords.y; i < coords.y + blockSize.y; i++)
         {
-            int sum = 0;
+            bool ret = true;
             for (int j = 0; j < BOARD_SIZE; j++)
             {
-                sum += boardBlocks[j, i];
+                if (!boardBlocks[j, i])
+                {
+                    ret = false;
+                    break;
+                }
             }
-            if (sum == BOARD_SIZE)
+            if (ret)
             {
                 list_row.Add(i);
                 num++;
@@ -208,7 +218,7 @@ public class BoardV2 : MonoBehaviour
         {
             for (int i = 0; i < BOARD_SIZE; i++)
             {
-                boardBlocks[i, j] = 0;
+                boardBlocks[i, j] = false;
                 boardTiles[i, j].color = boardTilePrefab.GetComponent<SpriteRenderer>().color;
             }
         }
@@ -217,7 +227,7 @@ public class BoardV2 : MonoBehaviour
         {
             for (int i = 0; i < BOARD_SIZE; i++)
             {
-                boardBlocks[j, i] = 0;
+                boardBlocks[j, i] = false;
                 boardTiles[j, i].color = boardTilePrefab.GetComponent<SpriteRenderer>().color;
             }
         }
@@ -254,7 +264,7 @@ public class BoardV2 : MonoBehaviour
         foreach (Vector2Int coords in highlightedBlocksPosList)
         {
             boardTiles[coords.x, coords.y].color = color;
-            boardBlocks[coords.x, coords.y] = 1;
+            boardBlocks[coords.x, coords.y] = true;
         }
     }
     private bool IsGameOver()
@@ -295,8 +305,7 @@ public class BoardV2 : MonoBehaviour
 
     private void Update()
     {
-        if (GameController.instance.isGameOver == true) return;
-        if (IsGameOver()) GameController.instance.SetGameOver();
+        if (isGameOver == true) return;
         else
         {
             // Check through conditions of all blocks
@@ -370,6 +379,11 @@ public class BoardV2 : MonoBehaviour
                 CreateBlocks();
                 return;
             }
+        }
+        if (IsGameOver()) 
+        {
+            isGameOver = true;
+            GameController.instance.SetGameOver(); 
         }
     }
 }

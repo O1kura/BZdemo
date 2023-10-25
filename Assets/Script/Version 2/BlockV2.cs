@@ -125,13 +125,12 @@ public class BlockV2 : MonoBehaviour, IDragHandler, IEndDragHandler
 
     public void SetBlock(Rect parentRect, int pos, BlockTileV2 blockTileV2, int rotaionIndex ,float canvasScaleFactor)
     {
-        CalculateBlockInfo();
 
         if( rotaionIndex != 0)
         {
             RotateStructure(rotaionIndex);
-            CalculateBlockInfo();
         }
+        CalculateBlockInfo();
 
         this.blockTilePrefab = blockTileV2;
         this.canvasScaleFactor = canvasScaleFactor;

@@ -15,8 +15,6 @@ public class GameController : MonoBehaviour
     public GameObject pauseMenuPanel;
 
     [HideInInspector]
-    public bool isGameOver;
-    [HideInInspector]
     public bool paused;
 
     private int score = 0;
@@ -81,7 +79,6 @@ public class GameController : MonoBehaviour
 
     public void SetGameOver()
     {
-        isGameOver = true;
         PauseGame();
         resumeBtn.interactable = false;
         SaveHighscore();
@@ -90,7 +87,6 @@ public class GameController : MonoBehaviour
     public void NewGame()
     {
         SaveHighscore();
-        isGameOver = false;
         UnpauseGame();
         LoadHighscore();
         score = 0;
