@@ -49,11 +49,11 @@ public class BoardV2 : MonoBehaviour
             }
         }
     }
-    private BlockV2 SpawnBlock(int pos, int blockTileIndex, int blockIndex)
+    private BlockV2 SpawnBlock(int pos, int blockTileIndex, int blockIndex, int rotationIndex)
     {
         Rect rect = spawner.GetComponent<RectTransform>().rect;
         BlockV2 block = Instantiate(blockPrefabs[blockIndex], spawner.transform).GetComponent<BlockV2>();
-        block.SetBlock(rect, pos, blockTileV2s[blockTileIndex], canvasScaleFactor);
+        block.SetBlock(rect, pos, blockTileV2s[blockTileIndex], rotationIndex, canvasScaleFactor);
         return block;
     }
     private void CreateBoard()
@@ -84,13 +84,11 @@ public class BoardV2 : MonoBehaviour
         {
             while (true)
             {
-                int index = Random.Range(0, blockPrefabs.Length);
-                
-                if (CanPlaceBlock(blockPrefabs[index]).Count > 0) 
-                {
-                    blocks[i] = SpawnBlock(i, Random.Range(0, blockTileV2s.Length), index);
-                    break; 
-                }
+                blocks[i] = SpawnBlock(i, Random.Range(0, blockTileV2s.Length)
+                    , Random.Range(0, blockPrefabs.Length), Random.Range(0, 4));
+
+                if (CanPlaceBlock(blocks[i]).Count > 0)  break; 
+                else Destroy(blocks[i].gameObject);
             }
 
         }
