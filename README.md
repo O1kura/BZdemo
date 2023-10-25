@@ -1,1 +1,2 @@
-A Demo for Block Puzzle Game
+#Block Puzzle Demo
+Demo for a simple Block Puzzle Game
