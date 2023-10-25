@@ -11,7 +11,8 @@ public class Board : MonoBehaviour
     public GameObject spawner;
     public GameObject[] blockPrefabs;
 
-
+    [HideInInspector]
+    public bool isGameOver;
     [HideInInspector]
     public SpriteRenderer[,] boardTiles = new SpriteRenderer[BOARD_SIZE, BOARD_SIZE];
     [HideInInspector]
@@ -26,6 +27,7 @@ public class Board : MonoBehaviour
 
     public void ResetBoard()
     {
+        isGameOver = false;
         ResetBoardTiles();
         ResetBoardBlocks();
         CreateBlocks();
@@ -281,8 +283,8 @@ public class Board : MonoBehaviour
 
     private void Update()
     {
-        if (GameController.instance.isGameOver == true) return;
-        if (IsGameOver()) GameController.instance.SetGameOver();
+        if (isGameOver == true) return;
+        if (IsGameOver()) { isGameOver = true; GameController.instance.SetGameOver(); }
         int blocksNum = BLOCKS_AMOUNT;
         for (int i = 0; i < BLOCKS_AMOUNT; i++)
             if (blocks[i] == null)
